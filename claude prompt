@@ -1,0 +1,161 @@
+Claude Code Prompt: Shelley Kidder Personal Brand Website
+Context & Goal
+Build a personal brand website for Shelley Kidder, a Mary Kay Independent Sales Director based in Holiday, Florida. This is NOT a Mary Kay website — it's a personal brand site that positions Shelley as a skincare and beauty expert who happens to sell Mary Kay products. The distinction is critical for compliance.
+Mary Kay Compliance Rules (MUST FOLLOW)
+The following rules come directly from Mary Kay's Internet Guidelines and Independent Beauty Consultant Agreement. Violating these could result in termination of Shelley's Mary Kay Agreement.
+What is NOT allowed on this website:
+
+No Mary Kay logos, trademarks, or trade names anywhere on the site (except in the one approved link — see below)
+No Mary Kay product images — do not use any images from marykay.com or MK marketing materials
+No Mary Kay product names (e.g., TimeWise, Botanical Effects, etc.) — these are trademarked
+No pricing of Mary Kay products
+No product claims that haven't been tested/supported by the company
+No implication that Mary Kay endorses this website
+No replication of any content from her MK Personal Web Site
+No selling or displaying Mary Kay products directly on this site
+No earnings claims or income representations
+No mention of the career car program without required disclaimers
+Do not create a browser or border environment around MK Personal Website material
+
+What IS allowed:
+
+A personal website about Shelley as a person, beauty expert, and entrepreneur
+Her personal story, photos of herself (not MK products), testimonials about HER (not MK products)
+A single link to her Mary Kay Personal Web Site using ONLY one of these approved link texts:
+
+"Shop online with me, your Mary Kay Independent Beauty Consultant"
+"Interested in a free makeover? Visit me, your Mary Kay Independent Beauty Consultant"
+"Beauty is just a click away! Visit me, your Mary Kay Independent Beauty Consultant"
+"Shop twenty-four hours a day! Visit me, your Mary Kay Independent Beauty Consultant"
+
+
+General skincare tips and beauty advice (not tied to specific MK products)
+A booking/contact system for personalized beauty consultations
+Her own original content, photos, and text
+Links to her social media accounts
+
+The linking site must NOT:
+
+Advertise or represent her Mary Kay business other than through approved link texts
+Imply Mary Kay Inc. is endorsing its contents
+Use any company trademarks or trade names other than those in approved link texts
+Contain offensive, controversial, or distasteful content
+Disparage Mary Kay Inc. or its products
+Present false or misleading information about Mary Kay or the MK career opportunity
+
+About Shelley (from her Facebook business page)
+"Shelley Kidder began with Mary Kay for the discount, but quickly turned her passion into a full-time career. Now an Independent Sales Director, she helps others feel confident through personalized beauty experiences and high-quality skincare."
+
+Location: Holiday, Florida
+Role: Independent Sales Director (but on the website, position her as a "Beauty & Skincare Consultant" or "Skincare Expert" — do NOT use the Mary Kay title)
+Tone: Warm, approachable, confident, genuine — a real person who cares about helping women feel beautiful, not a corporate sales pitch
+Target audience: Women in the Tampa Bay / Pasco County area (and virtually anywhere) who want personalized skincare guidance
+
+Website Structure & Content
+Build this as a single-page React site (or clean HTML) with the following sections:
+1. Hero Section
+
+Her name prominently: "Shelley Kidder"
+Tagline like: "Your Personal Beauty & Skincare Consultant" or "Helping You Feel Confident in Your Own Skin"
+Subtitle: Based in Holiday, Florida | Serving clients locally & virtually
+CTA button: "Book a Free Consultation"
+Use a warm, inviting color palette — think soft pinks, creams, golds, or elegant neutrals. NOT Mary Kay pink specifically.
+
+2. About / My Story
+
+Adapt her bio into a warm personal narrative:
+
+Started her beauty journey years ago, originally just looking for quality skincare for herself
+Fell in love with helping other women discover what works for their skin
+Now a full-time skincare and beauty consultant and team mentor
+Passionate about personalized recommendations — not one-size-fits-all
+Based in Holiday, FL, serving clients in person and virtually
+
+
+Do NOT mention "Mary Kay" in this section — keep it about HER expertise and passion
+
+3. What I Offer / Services
+
+Personalized Skin Care Consultation — "I'll help you find the perfect routine for your skin type, concerns, and lifestyle. Whether you're dealing with dryness, aging, sensitivity, or just want to refresh your routine — I've got you."
+Virtual Beauty Experience — "Can't meet in person? No problem. I host fun, interactive virtual beauty sessions for you and your friends."
+Group Beauty Events — "Perfect for girls' nights, bridal parties, birthdays, or team bonding. I bring the products, the expertise, and the fun."
+One-on-One Mentoring — "Interested in building your own beauty business? I mentor women who want to turn their passion for beauty into income."
+
+4. Skincare Tips / Blog Section (placeholder)
+
+3-4 placeholder cards for blog posts with general skincare topics:
+
+"5 Morning Skincare Habits That Changed My Skin"
+"How to Build a Skincare Routine That Actually Works"
+"Why Your Moisturizer Might Not Be Enough"
+"Skincare Myths I Wish I'd Stopped Believing Sooner"
+
+
+These are general beauty content — NO Mary Kay product mentions
+
+5. Testimonials
+
+Placeholder testimonial cards (Shelley can fill these in with real ones):
+
+"Shelley helped me find a skincare routine that finally works for my sensitive skin. I've never felt more confident!" — [Name, Location]
+"The virtual beauty party Shelley hosted for my bridal shower was so much fun. Everyone loved it!" — [Name, Location]
+"I was overwhelmed by all the skincare options out there. Shelley made it simple and personal." — [Name, Location]
+
+
+
+6. Shop With Me (THE COMPLIANT LINK)
+
+A small, tasteful section — NOT the main focus of the site
+Text like: "Ready to explore the products I love and recommend?"
+The actual link must use one of the approved texts EXACTLY. Recommended:
+
+"Shop online with me, your Mary Kay Independent Beauty Consultant"
+
+
+Link to: https://www.marykay.com/shelley-kidder (placeholder — Shelley will provide her actual MK Personal Web Site URL)
+This is the ONLY place "Mary Kay" should appear on the entire site
+
+7. Contact / Book a Consultation
+
+Simple contact form or booking integration (Calendly embed or similar)
+Phone, email, social media links
+"I'd love to hear from you! Whether you have a skincare question, want to book a consultation, or are curious about hosting a beauty event — reach out."
+
+8. Footer
+
+© 2026 Shelley Kidder. All rights reserved.
+Links to: Facebook, Instagram, social profiles
+"This is an independent personal website and is not endorsed by, affiliated with, or sponsored by any specific brand."
+Privacy policy placeholder link
+
+Technical Requirements
+
+Framework: React (single .jsx file) or clean HTML — whatever produces the best result
+Styling: Tailwind CSS or inline styles. Elegant, modern, mobile-responsive.
+Color palette: Warm and inviting. Suggested: soft rose/blush tones, cream/ivory, gold accents, charcoal text. Avoid hot pink or anything that looks like official MK branding.
+Typography: Clean, modern serif for headings (or elegant sans-serif), readable sans-serif for body
+Images: Use placeholder image areas that Shelley can replace with her own photos. For now, use tasteful gradient backgrounds or abstract beauty-themed SVG patterns.
+No external dependencies beyond what's available (React, Tailwind, Lucide icons)
+Mobile-first responsive design
+Performance: Fast, clean, minimal
+
+Deployment Notes
+This site should be deployable to:
+
+Vercel (preferred — free tier)
+Netlify
+GitHub Pages
+Or any static hosting
+
+Domain suggestion: shelleykidder.com or beautybyshelley.com (check availability)
+Final Compliance Check
+Before considering the site complete, verify:
+
+✅ "Mary Kay" appears ONLY in the one approved shop link text
+✅ No MK logos, product images, or trademarked product names anywhere
+✅ No implication that Mary Kay endorses this site
+✅ No product pricing or earnings claims
+✅ No replication of MK Personal Web Site content
+✅ Footer disclaimer about independent personal website
+✅ The approved link text is used EXACTLY as written
+✅ The site focuses on Shelley as a person/expert, not on Mary Kay as a brand
