@@ -1,0 +1,284 @@
+{
+  "name": "Shelley Kidder — Consultation Booked → Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shelley-calendly-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "id": "calendly-webhook",
+      "name": "Calendly Webhook",
+      "webhookId": "shelley-calendly-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-event-type",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "invitee.created",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "check-event-type",
+      "name": "Is New Booking?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-name",
+              "name": "invitee_name",
+              "value": "={{ $json.body.payload.name }}",
+              "type": "string"
+            },
+            {
+              "id": "set-email",
+              "name": "invitee_email",
+              "value": "={{ $json.body.payload.email }}",
+              "type": "string"
+            },
+            {
+              "id": "set-event-name",
+              "name": "event_name",
+              "value": "={{ $json.body.payload.event_type.name || 'Skincare Consultation' }}",
+              "type": "string"
+            },
+            {
+              "id": "set-scheduled-time",
+              "name": "scheduled_time",
+              "value": "={{ $json.body.payload.scheduled_event.start_time }}",
+              "type": "string"
+            },
+            {
+              "id": "set-scheduled-end",
+              "name": "scheduled_end",
+              "value": "={{ $json.body.payload.scheduled_event.end_time }}",
+              "type": "string"
+            },
+            {
+              "id": "set-timezone",
+              "name": "timezone",
+              "value": "={{ $json.body.payload.timezone }}",
+              "type": "string"
+            },
+            {
+              "id": "set-questions",
+              "name": "intake_answers",
+              "value": "={{ JSON.stringify($json.body.payload.questions_and_answers || []) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [440, -50],
+      "id": "format-booking-data",
+      "name": "Format Booking Data"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "returnAll": false,
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=email=eq.{{ $json.invitee_email }}"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [660, -150],
+      "id": "lookup-lead",
+      "name": "Lookup Lead in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "matchingColumns": ["email"],
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "email", "fieldValue": "={{ $('Format Booking Data').item.json.invitee_email }}" },
+            { "fieldName": "status", "fieldValue": "consultation_booked" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [880, -150],
+      "id": "update-lead-status",
+      "name": "Update Lead Status → consultation_booked",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "consultations",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "lead_id", "fieldValue": "={{ $('Lookup Lead in Supabase').item.json.id || null }}" },
+            { "fieldName": "scheduled_date", "fieldValue": "={{ $('Format Booking Data').item.json.scheduled_time }}" },
+            { "fieldName": "notes", "fieldValue": "={{ $('Format Booking Data').item.json.intake_answers }}" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [880, 50],
+      "id": "create-consultation-record",
+      "name": "Create Consultation Record",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "senderEmail": "notifications@kiddersystems.com",
+        "receipients": "michael@kidder.systems",
+        "subject": "=📅 New Consultation Booked — {{ $('Format Booking Data').item.json.invitee_name }}",
+        "htmlContent": "=<html><body><h2>📅 New Consultation Booked!</h2><p><strong>Client:</strong> {{ $('Format Booking Data').item.json.invitee_name }}</p><p><strong>Email:</strong> {{ $('Format Booking Data').item.json.invitee_email }}</p><p><strong>Event:</strong> {{ $('Format Booking Data').item.json.event_name }}</p><p><strong>Scheduled:</strong> {{ $('Format Booking Data').item.json.scheduled_time }}</p><p><strong>Timezone:</strong> {{ $('Format Booking Data').item.json.timezone }}</p><h3>Intake Answers:</h3><pre>{{ $('Format Booking Data').item.json.intake_answers }}</pre><hr><p><em>This person has been marked as 'consultation_booked' in Supabase.</em></p></body></html>"
+      },
+      "type": "n8n-nodes-base.brevo",
+      "typeVersion": 1,
+      "position": [660, 200],
+      "id": "notify-michael-email",
+      "name": "Email Michael — New Booking",
+      "credentials": {
+        "brevoApi": {
+          "id": "YOUR_BREVO_CREDENTIAL_ID",
+          "name": "Brevo - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.MOM_NOTIFICATION_WEBHOOK || 'https://hooks.slack.com/YOUR_WEBHOOK' }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=📅 *New Consultation Booked!*\n\n*Name:* {{ $('Format Booking Data').item.json.invitee_name }}\n*Email:* {{ $('Format Booking Data').item.json.invitee_email }}\n*When:* {{ $('Format Booking Data').item.json.scheduled_time }}\n\n*Intake Answers:*\n{{ $('Format Booking Data').item.json.intake_answers }}\n\n_Make sure to review their quiz answers before the call!_"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 400],
+      "id": "notify-mom",
+      "name": "Notify Mom (Slack/SMS Webhook)"
+    }
+  ],
+  "connections": {
+    "Calendly Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is New Booking?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is New Booking?": {
+      "main": [
+        [
+          {
+            "node": "Format Booking Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Booking Data": {
+      "main": [
+        [
+          {
+            "node": "Lookup Lead in Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Consultation Record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Michael — New Booking",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Mom (Slack/SMS Webhook)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Lead in Supabase": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Status → consultation_booked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    { "name": "shelley-kidder" },
+    { "name": "consultation-booking" }
+  ]
+}

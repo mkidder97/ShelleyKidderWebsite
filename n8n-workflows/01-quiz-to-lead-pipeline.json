@@ -1,0 +1,271 @@
+{
+  "name": "Shelley Kidder — Quiz Completion → Lead Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shelley-quiz-submit",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "id": "quiz-webhook",
+      "name": "Quiz Submission Webhook",
+      "webhookId": "shelley-quiz-submit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-first-name",
+              "name": "first_name",
+              "value": "={{ $json.body.name.split(' ')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "set-last-name",
+              "name": "last_name",
+              "value": "={{ $json.body.name.split(' ').slice(1).join(' ') || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "set-email",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "set-skin-type",
+              "name": "skin_type",
+              "value": "={{ $json.body.skin_type }}",
+              "type": "string"
+            },
+            {
+              "id": "set-concerns",
+              "name": "top_concerns",
+              "value": "={{ $json.body.concerns }}",
+              "type": "string"
+            },
+            {
+              "id": "set-routine",
+              "name": "current_routine",
+              "value": "={{ $json.body.current_routine }}",
+              "type": "string"
+            },
+            {
+              "id": "set-age-range",
+              "name": "age_range",
+              "value": "={{ $json.body.age_range }}",
+              "type": "string"
+            },
+            {
+              "id": "set-time-commitment",
+              "name": "time_commitment",
+              "value": "={{ $json.body.time_commitment }}",
+              "type": "string"
+            },
+            {
+              "id": "set-source",
+              "name": "source",
+              "value": "quiz",
+              "type": "string"
+            },
+            {
+              "id": "set-status",
+              "name": "status",
+              "value": "new",
+              "type": "string"
+            },
+            {
+              "id": "set-quiz-answers",
+              "name": "quiz_answers",
+              "value": "={{ JSON.stringify({ skin_type: $json.body.skin_type, concerns: $json.body.concerns, current_routine: $json.body.current_routine, age_range: $json.body.age_range, time_commitment: $json.body.time_commitment }) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0],
+      "id": "format-lead-data",
+      "name": "Format Lead Data"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "leads",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "first_name", "fieldValue": "={{ $json.first_name }}" },
+            { "fieldName": "last_name", "fieldValue": "={{ $json.last_name }}" },
+            { "fieldName": "email", "fieldValue": "={{ $json.email }}" },
+            { "fieldName": "skin_type", "fieldValue": "={{ $json.skin_type }}" },
+            { "fieldName": "top_concerns", "fieldValue": "={{ $json.top_concerns }}" },
+            { "fieldName": "source", "fieldValue": "={{ $json.source }}" },
+            { "fieldName": "status", "fieldValue": "={{ $json.status }}" },
+            { "fieldName": "quiz_answers", "fieldValue": "={{ $json.quiz_answers }}" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [440, -100],
+      "id": "insert-lead-supabase",
+      "name": "Insert Lead → Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "contact",
+        "operation": "createOrUpdate",
+        "email": "={{ $('Format Lead Data').item.json.email }}",
+        "additionalFields": {
+          "firstName": "={{ $('Format Lead Data').item.json.first_name }}",
+          "lastName": "={{ $('Format Lead Data').item.json.last_name }}",
+          "listIds": "2"
+        }
+      },
+      "type": "n8n-nodes-base.brevo",
+      "typeVersion": 1,
+      "position": [440, 100],
+      "id": "add-to-brevo",
+      "name": "Add Contact → Brevo",
+      "credentials": {
+        "brevoApi": {
+          "id": "YOUR_BREVO_CREDENTIAL_ID",
+          "name": "Brevo - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "senderEmail": "hello@shelleykidder.com",
+        "receipients": "={{ $('Format Lead Data').item.json.email }}",
+        "subject": "Your Custom Skincare Routine is Ready ✨",
+        "htmlContent": "<html><body><h1>Hi {{ $('Format Lead Data').item.json.first_name }}!</h1><p>Thanks for taking the skincare quiz! Based on your answers, here's what I recommend for your <strong>{{ $('Format Lead Data').item.json.skin_type }}</strong> skin:</p><h2>Your Personalized Routine</h2><p><em>This is a general recommendation — for a truly customized routine tailored to your specific needs, let's chat!</em></p><h3>Morning:</h3><ol><li>Gentle cleanser suited for your skin type</li><li>Vitamin C serum (helps with brightness and protection)</li><li>Moisturizer matched to your skin's needs</li><li>SPF 30+ (non-negotiable!)</li></ol><h3>Evening:</h3><ol><li>Double cleanse (oil-based first, then water-based)</li><li>Treatment serum targeted to your top concerns</li><li>Eye cream</li><li>Night moisturizer or sleeping mask</li></ol><p><strong>Want to go deeper?</strong> I'd love to walk you through the exact products that work best for your skin — completely free, no pressure.</p><p><a href='CALENDLY_URL_PLACEHOLDER'>Book Your Free 30-Minute Consultation →</a></p><p>Talk soon,<br>Shelley</p></body></html>"
+      },
+      "type": "n8n-nodes-base.brevo",
+      "typeVersion": 1,
+      "position": [660, 100],
+      "id": "send-quiz-results-email",
+      "name": "Send Quiz Results Email",
+      "credentials": {
+        "brevoApi": {
+          "id": "YOUR_BREVO_CREDENTIAL_ID",
+          "name": "Brevo - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NOTIFICATION_WEBHOOK_URL || 'https://hooks.slack.com/YOUR_SLACK_WEBHOOK' }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=🎯 *New Quiz Lead!*\n\n*Name:* {{ $('Format Lead Data').item.json.first_name }} {{ $('Format Lead Data').item.json.last_name }}\n*Email:* {{ $('Format Lead Data').item.json.email }}\n*Skin Type:* {{ $('Format Lead Data').item.json.skin_type }}\n*Concerns:* {{ $('Format Lead Data').item.json.top_concerns }}\n*Current Routine:* {{ $('Format Lead Data').item.json.current_routine }}\n*Age Range:* {{ $('Format Lead Data').item.json.age_range }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 300],
+      "id": "notify-michael",
+      "name": "Notify Michael (Slack/Webhook)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Quiz submitted successfully' }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 0],
+      "id": "respond-success",
+      "name": "Respond Success"
+    }
+  ],
+  "connections": {
+    "Quiz Submission Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Insert Lead → Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Add Contact → Brevo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Michael (Slack/Webhook)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Lead → Supabase": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Contact → Brevo": {
+      "main": [
+        [
+          {
+            "node": "Send Quiz Results Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    { "name": "shelley-kidder" },
+    { "name": "lead-pipeline" }
+  ]
+}

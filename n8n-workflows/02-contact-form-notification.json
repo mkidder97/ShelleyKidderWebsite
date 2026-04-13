@@ -1,0 +1,189 @@
+{
+  "name": "Shelley Kidder — Contact Form → Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shelley-contact-form",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "id": "contact-webhook",
+      "name": "Contact Form Webhook",
+      "webhookId": "shelley-contact-form"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-name",
+              "name": "name",
+              "value": "={{ $json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "set-email",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "set-message",
+              "name": "message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "set-timestamp",
+              "name": "submitted_at",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0],
+      "id": "format-contact-data",
+      "name": "Format Contact Data"
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "senderEmail": "notifications@kiddersystems.com",
+        "receipients": "michael@kidder.systems",
+        "subject": "=New Contact Form Submission from {{ $json.name }}",
+        "htmlContent": "=<html><body><h2>New Contact Form Submission</h2><p><strong>From:</strong> {{ $json.name }} ({{ $json.email }})</p><p><strong>Message:</strong></p><blockquote>{{ $json.message }}</blockquote><p><strong>Submitted:</strong> {{ $json.submitted_at }}</p><hr><p><a href='mailto:{{ $json.email }}'>Reply to {{ $json.name }}</a></p></body></html>"
+      },
+      "type": "n8n-nodes-base.brevo",
+      "typeVersion": 1,
+      "position": [440, -100],
+      "id": "email-michael",
+      "name": "Email Michael",
+      "credentials": {
+        "brevoApi": {
+          "id": "YOUR_BREVO_CREDENTIAL_ID",
+          "name": "Brevo - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "senderEmail": "hello@shelleykidder.com",
+        "receipients": "={{ $('Format Contact Data').item.json.email }}",
+        "subject": "Thanks for reaching out! — Shelley Kidder",
+        "htmlContent": "=<html><body><h2>Hi {{ $('Format Contact Data').item.json.name.split(' ')[0] }}!</h2><p>Thanks for reaching out! I received your message and will get back to you within 24 hours.</p><p>In the meantime, if you'd like to skip ahead and book a free skincare consultation, you can do that here:</p><p><a href='CALENDLY_URL_PLACEHOLDER'>Book Your Free Consultation →</a></p><p>Talk soon,<br>Shelley</p></body></html>"
+      },
+      "type": "n8n-nodes-base.brevo",
+      "typeVersion": 1,
+      "position": [440, 100],
+      "id": "auto-reply-sender",
+      "name": "Auto-Reply to Sender",
+      "credentials": {
+        "brevoApi": {
+          "id": "YOUR_BREVO_CREDENTIAL_ID",
+          "name": "Brevo - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "contact",
+        "operation": "createOrUpdate",
+        "email": "={{ $('Format Contact Data').item.json.email }}",
+        "additionalFields": {
+          "firstName": "={{ $('Format Contact Data').item.json.name.split(' ')[0] }}",
+          "lastName": "={{ $('Format Contact Data').item.json.name.split(' ').slice(1).join(' ') || '' }}",
+          "listIds": "3"
+        }
+      },
+      "type": "n8n-nodes-base.brevo",
+      "typeVersion": 1,
+      "position": [440, 300],
+      "id": "add-contact-brevo",
+      "name": "Add to Brevo Contact List",
+      "credentials": {
+        "brevoApi": {
+          "id": "YOUR_BREVO_CREDENTIAL_ID",
+          "name": "Brevo - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Message received' }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, 0],
+      "id": "respond-success",
+      "name": "Respond Success"
+    }
+  ],
+  "connections": {
+    "Contact Form Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format Contact Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Contact Data": {
+      "main": [
+        [
+          {
+            "node": "Email Michael",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Auto-Reply to Sender",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Add to Brevo Contact List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Michael": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    { "name": "shelley-kidder" },
+    { "name": "contact-form" }
+  ]
+}

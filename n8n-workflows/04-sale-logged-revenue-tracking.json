@@ -1,0 +1,289 @@
+{
+  "name": "Shelley Kidder — Sale Logged → Revenue Tracking",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shelley-sale-logged",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "id": "sale-webhook",
+      "name": "Sale Submission Webhook",
+      "webhookId": "shelley-sale-logged"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-customer-name",
+              "name": "customer_name",
+              "value": "={{ $json.body.customer_name }}",
+              "type": "string"
+            },
+            {
+              "id": "set-date",
+              "name": "sale_date",
+              "value": "={{ $json.body.date || new Date().toISOString().split('T')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "set-retail",
+              "name": "amount_retail",
+              "value": "={{ Number($json.body.amount_retail) }}",
+              "type": "number"
+            },
+            {
+              "id": "set-wholesale",
+              "name": "amount_wholesale",
+              "value": "={{ Number($json.body.amount_wholesale) }}",
+              "type": "number"
+            },
+            {
+              "id": "set-net",
+              "name": "net_profit",
+              "value": "={{ Number($json.body.amount_retail) - Number($json.body.amount_wholesale) }}",
+              "type": "number"
+            },
+            {
+              "id": "set-your-cut",
+              "name": "kidder_cut_25pct",
+              "value": "={{ (Number($json.body.amount_retail) - Number($json.body.amount_wholesale)) * 0.25 }}",
+              "type": "number"
+            },
+            {
+              "id": "set-products",
+              "name": "products",
+              "value": "={{ $json.body.products }}",
+              "type": "string"
+            },
+            {
+              "id": "set-source",
+              "name": "source",
+              "value": "={{ $json.body.source || 'funnel' }}",
+              "type": "string"
+            },
+            {
+              "id": "set-customer-email",
+              "name": "customer_email",
+              "value": "={{ $json.body.customer_email || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "set-is-repeat",
+              "name": "is_repeat",
+              "value": "={{ $json.body.is_repeat || false }}",
+              "type": "boolean"
+            },
+            {
+              "id": "set-notes",
+              "name": "notes",
+              "value": "={{ $json.body.notes || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0],
+      "id": "format-sale-data",
+      "name": "Format Sale Data"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "returnAll": false,
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=email=eq.{{ $json.customer_email }}"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [440, -100],
+      "id": "lookup-lead",
+      "name": "Lookup Lead by Email",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "sales",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "lead_id", "fieldValue": "={{ $('Lookup Lead by Email').item.json.id || null }}" },
+            { "fieldName": "date", "fieldValue": "={{ $('Format Sale Data').item.json.sale_date }}" },
+            { "fieldName": "amount_retail", "fieldValue": "={{ $('Format Sale Data').item.json.amount_retail }}" },
+            { "fieldName": "amount_wholesale", "fieldValue": "={{ $('Format Sale Data').item.json.amount_wholesale }}" },
+            { "fieldName": "products", "fieldValue": "={{ $('Format Sale Data').item.json.products }}" },
+            { "fieldName": "source", "fieldValue": "={{ $('Format Sale Data').item.json.source }}" },
+            { "fieldName": "is_repeat", "fieldValue": "={{ $('Format Sale Data').item.json.is_repeat }}" },
+            { "fieldName": "notes", "fieldValue": "={{ $('Format Sale Data').item.json.notes }}" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [660, -100],
+      "id": "insert-sale-supabase",
+      "name": "Insert Sale → Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "matchingColumns": ["email"],
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "email", "fieldValue": "={{ $('Format Sale Data').item.json.customer_email }}" },
+            { "fieldName": "status", "fieldValue": "customer" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [880, -100],
+      "id": "update-lead-to-customer",
+      "name": "Update Lead → Customer Status",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "senderEmail": "notifications@kiddersystems.com",
+        "receipients": "michael@kidder.systems",
+        "subject": "=💰 Sale Logged — ${{ $('Format Sale Data').item.json.amount_retail }} retail | Your cut: ${{ $('Format Sale Data').item.json.kidder_cut_25pct.toFixed(2) }}",
+        "htmlContent": "=<html><body><h2>💰 New Sale Logged!</h2><table border='1' cellpadding='8' cellspacing='0' style='border-collapse:collapse;'><tr><td><strong>Customer</strong></td><td>{{ $('Format Sale Data').item.json.customer_name }}</td></tr><tr><td><strong>Date</strong></td><td>{{ $('Format Sale Data').item.json.sale_date }}</td></tr><tr><td><strong>Retail Amount</strong></td><td>${{ $('Format Sale Data').item.json.amount_retail }}</td></tr><tr><td><strong>Wholesale Cost</strong></td><td>${{ $('Format Sale Data').item.json.amount_wholesale }}</td></tr><tr><td><strong>Net Profit</strong></td><td>${{ $('Format Sale Data').item.json.net_profit.toFixed(2) }}</td></tr><tr style='background:#e8f5e9;'><td><strong>Your 25% Cut</strong></td><td><strong>${{ $('Format Sale Data').item.json.kidder_cut_25pct.toFixed(2) }}</strong></td></tr><tr><td><strong>Products</strong></td><td>{{ $('Format Sale Data').item.json.products }}</td></tr><tr><td><strong>Source</strong></td><td>{{ $('Format Sale Data').item.json.source }}</td></tr><tr><td><strong>Repeat Customer?</strong></td><td>{{ $('Format Sale Data').item.json.is_repeat ? 'Yes' : 'No' }}</td></tr></table><p>{{ $('Format Sale Data').item.json.notes ? 'Notes: ' + $('Format Sale Data').item.json.notes : '' }}</p></body></html>"
+      },
+      "type": "n8n-nodes-base.brevo",
+      "typeVersion": 1,
+      "position": [660, 150],
+      "id": "notify-michael-sale",
+      "name": "Email Michael — Sale Notification",
+      "credentials": {
+        "brevoApi": {
+          "id": "YOUR_BREVO_CREDENTIAL_ID",
+          "name": "Brevo - Kidder Systems"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Sale recorded', net_profit: $('Format Sale Data').item.json.net_profit, kidder_cut: $('Format Sale Data').item.json.kidder_cut_25pct }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, 0],
+      "id": "respond-success",
+      "name": "Respond Success"
+    }
+  ],
+  "connections": {
+    "Sale Submission Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format Sale Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Sale Data": {
+      "main": [
+        [
+          {
+            "node": "Lookup Lead by Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Michael — Sale Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Lead by Email": {
+      "main": [
+        [
+          {
+            "node": "Insert Sale → Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Sale → Supabase": {
+      "main": [
+        [
+          {
+            "node": "Update Lead → Customer Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead → Customer Status": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Michael — Sale Notification": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    { "name": "shelley-kidder" },
+    { "name": "revenue-tracking" }
+  ]
+}
