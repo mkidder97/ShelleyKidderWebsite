@@ -1,5 +1,5 @@
 const SHOP_URL =
-  process.env.NEXT_PUBLIC_MK_SHOP_URL ?? "https://www.marykay.com/shelley-kidder";
+  process.env.NEXT_PUBLIC_MK_SHOP_URL ?? "https://www.marykay.com/shelleykidder/en/home";
 
 export function ShopWithMe() {
   return (
