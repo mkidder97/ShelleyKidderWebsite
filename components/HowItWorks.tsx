@@ -12,7 +12,7 @@ const steps = [
   {
     number: "03",
     title: "Book a consultation",
-    description: "Go deeper with a free one-on-one — in person or virtual.",
+    description: "Go deeper with a free one-on-one, in person or virtual.",
   },
 ];
 

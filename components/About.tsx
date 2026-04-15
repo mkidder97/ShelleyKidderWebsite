@@ -26,19 +26,19 @@ export function About() {
           </h2>
           <div className="mt-6 space-y-4 text-lg leading-relaxed text-warm-gray">
             <p>
-              It started simply: Shelley was looking for quality skincare that
-              actually worked for her. What she discovered along the way was
-              something bigger — a love for helping other women find what works
+              It started simply. Shelley was looking for quality skincare that
+              actually worked for her, and along the way she discovered
+              something bigger: a love for helping other women find what works
               for their skin, too.
             </p>
             <p>
               Today she&rsquo;s a full-time beauty and skincare consultant and
-              team mentor, known for warm, personalized recommendations — never
-              one-size-fits-all.
+              team mentor, known for warm, personalized recommendations rather
+              than one-size-fits-all advice.
             </p>
             <p>
-              Based in Holiday, Florida, she serves clients in person around
-              the Tampa Bay area and virtually anywhere you are.
+              Based in Madeira Beach, Florida, she serves clients in person
+              around the Tampa Bay area and virtually anywhere you are.
             </p>
           </div>
         </div>

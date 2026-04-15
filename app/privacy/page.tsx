@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Shelley Kidder",
+  title: "Privacy Policy | Shelley Kidder",
   description: "How information collected on this website is used.",
 };
 
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <h2 className="text-2xl text-charcoal">Who runs this site</h2>
             <p className="mt-3">
               This site is operated by Shelley Kidder, an independent beauty
-              and skincare consultant based in Holiday, Florida.
+              and skincare consultant based in Madeira Beach, Florida.
             </p>
           </section>
 
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
             <h2 className="text-2xl text-charcoal">What I collect</h2>
             <p className="mt-3">
               When you take the skincare quiz or use the contact form, I
-              collect the information you voluntarily provide — typically your
+              collect the information you voluntarily provide, typically your
               name, email address, and the answers you submit.
             </p>
             <p className="mt-3">

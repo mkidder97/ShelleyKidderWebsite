@@ -38,7 +38,7 @@ const ROUTINE_OPTIONS: Option<CurrentRoutine>[] = [
   { value: "none", label: "I don't really have one" },
   { value: "cleanser_only", label: "Cleanser only" },
   { value: "cleanser_moisturizer", label: "Cleanser + moisturizer" },
-  { value: "full_routine", label: "Full routine — cleanser, toner, serum, moisturizer, SPF" },
+  { value: "full_routine", label: "Full routine: cleanser, toner, serum, moisturizer, SPF" },
   { value: "whatever_sale", label: "I use whatever's on sale" },
 ];
 
@@ -189,7 +189,7 @@ export function QuizForm() {
         {step === 2 && (
           <StepWrap
             title="What are your top skin concerns?"
-            subtitle="Choose up to 3 — I'll focus the routine on what matters most to you."
+            subtitle="Choose up to 3. I'll focus the routine on what matters most to you."
           >
             <OptionGrid<Concern>
               multi
@@ -209,7 +209,7 @@ export function QuizForm() {
         {step === 3 && (
           <StepWrap
             title="What does your current routine look like?"
-            subtitle="There's no wrong answer — I meet you where you are."
+            subtitle="There's no wrong answer. I meet you where you are."
           >
             <OptionGrid<CurrentRoutine>
               options={ROUTINE_OPTIONS}
@@ -224,7 +224,7 @@ export function QuizForm() {
         )}
 
         {step === 4 && (
-          <StepWrap title="What's your age range?" subtitle="Skin needs shift over time — I'll take that into account.">
+          <StepWrap title="What's your age range?" subtitle="Skin needs shift over time, so I'll take that into account.">
             <OptionGrid<AgeRange>
               options={AGE_OPTIONS}
               selected={draft.age_range ? [draft.age_range] : []}
@@ -287,7 +287,7 @@ export function QuizForm() {
                 />
               </div>
               <p className="text-xs leading-relaxed text-warm-gray-light">
-                I&rsquo;ll send your routine and occasional skincare tips. No spam — unsubscribe anytime.
+                I&rsquo;ll send your routine and occasional skincare tips. No spam, unsubscribe anytime.
               </p>
               {error && (
                 <p className="rounded-xl bg-blush-50 px-4 py-3 text-sm text-blush-600">{error}</p>

@@ -2,7 +2,7 @@ const services = [
   {
     title: "Personalized Skincare Consultation",
     description:
-      "I'll help you find the perfect routine for your skin type, concerns, and lifestyle. Whether you're dealing with dryness, aging, sensitivity, or just want to refresh your routine — I've got you.",
+      "I'll help you find the perfect routine for your skin type, concerns, and lifestyle. Whether you're dealing with dryness, aging, sensitivity, or just want to refresh your routine, I've got you.",
   },
   {
     title: "Virtual Beauty Experience",

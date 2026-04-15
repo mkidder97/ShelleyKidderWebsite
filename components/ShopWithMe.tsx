@@ -12,7 +12,7 @@ export function ShopWithMe() {
           Ready to explore the products I love and recommend?
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-warm-gray">
-          Browse my full catalog online — anytime, anywhere.
+          Browse my full catalog online, anytime, anywhere.
         </p>
         <div className="mt-8">
           <a

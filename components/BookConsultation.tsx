@@ -14,9 +14,9 @@ export function BookConsultation() {
             Book a free consultation
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-warm-gray">
-            I&rsquo;d love to hear from you! Whether you have a skincare
+            I&rsquo;d love to hear from you. Whether you have a skincare
             question, want to book a consultation, or are curious about hosting
-            a beauty event — reach out.
+            a beauty event, reach out anytime.
           </p>
         </div>
 

@@ -12,7 +12,7 @@ export function Footer() {
             <p className="mt-2 text-sm text-warm-gray">
               Beauty & Skincare Consultant
             </p>
-            <p className="mt-1 text-sm text-warm-gray-light">Holiday, Florida</p>
+            <p className="mt-1 text-sm text-warm-gray-light">Madeira Beach, Florida</p>
           </div>
 
           <div>

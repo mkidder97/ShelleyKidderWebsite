@@ -16,13 +16,13 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Shelley Kidder — Beauty & Skincare Consultant",
+  title: "Shelley Kidder | Beauty & Skincare Consultant",
   description:
-    "Personalized skincare guidance and beauty experiences with Shelley Kidder. Based in Holiday, Florida — serving clients locally and virtually.",
+    "Personalized skincare guidance and beauty experiences with Shelley Kidder. Based in Madeira Beach, Florida, serving clients locally and virtually.",
   openGraph: {
-    title: "Shelley Kidder — Beauty & Skincare Consultant",
+    title: "Shelley Kidder | Beauty & Skincare Consultant",
     description:
-      "Personalized skincare guidance and beauty experiences. Based in Holiday, Florida.",
+      "Personalized skincare guidance and beauty experiences. Based in Madeira Beach, Florida.",
     type: "website",
   },
   robots: {

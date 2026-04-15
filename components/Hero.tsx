@@ -29,7 +29,7 @@ export function Hero() {
             Helping you feel confident in your own skin.
           </p>
           <p className="mt-3 text-base text-warm-gray-light">
-            Based in Holiday, Florida · Serving clients locally & virtually
+            Based in Madeira Beach, Florida · Serving clients locally & virtually
           </p>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-start md:gap-4">
