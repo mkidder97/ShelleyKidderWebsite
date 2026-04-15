@@ -21,13 +21,24 @@ export function Footer() {
             </p>
             <ul className="space-y-2 text-sm text-warm-gray">
               <li>
-                <a href="#" className="hover:text-blush-500">Instagram</a>
+                <a
+                  href="https://instagram.com/kiddershelley"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-blush-500"
+                >
+                  Instagram
+                </a>
               </li>
               <li>
-                <a href="#" className="hover:text-blush-500">Facebook</a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-blush-500">TikTok</a>
+                <a
+                  href="https://www.facebook.com/Shelley.Warren.Kidder"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-blush-500"
+                >
+                  Facebook
+                </a>
               </li>
             </ul>
           </div>
