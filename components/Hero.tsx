@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function Hero() {
@@ -48,12 +49,15 @@ export function Hero() {
         </div>
 
         <div className="flex-1 fade-up">
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-[2rem] bg-gradient-to-br from-blush-200 via-cream-100 to-gold-400/40 shadow-xl ring-1 ring-black/5">
-            <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-              <p className="font-serif text-sm italic text-warm-gray">
-                REPLACE: Shelley&rsquo;s headshot
-              </p>
-            </div>
+          <div className="relative mx-auto aspect-[3/5] w-full max-w-sm overflow-hidden rounded-[2rem] shadow-xl ring-1 ring-black/5">
+            <Image
+              src="/images/shelley-headshot.jpg"
+              alt="Portrait of Shelley Kidder"
+              fill
+              sizes="(min-width: 768px) 24rem, 100vw"
+              className="object-cover"
+              priority
+            />
           </div>
         </div>
       </div>

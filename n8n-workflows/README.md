@@ -1,156 +1,92 @@
 # n8n Workflows — Shelley Kidder Marketing Funnel
 
-Phase 1 automation workflows for the Shelley Kidder skincare marketing funnel. Import these JSON files directly into your n8n instance.
+Phase 1 automation workflows for the Shelley Kidder skincare marketing funnel.
 
-## Workflows
+> **Deployed state (2026-04-14):** All four flows are consolidated into a single active workflow on `https://mkidder97.app.n8n.cloud/` (id `5MbQgUFtIPURGhfQ`). The JSON files in this directory were the original per-workflow scaffolds — the live source of truth is the n8n UI. Email delivery is handled by **Resend** (not Brevo — docs below reflect the deployed stack).
 
-| # | File | Trigger | What It Does |
-|---|------|---------|--------------|
-| 01 | `01-quiz-to-lead-pipeline.json` | POST webhook from quiz form | Creates lead in Supabase, adds to Brevo email list, sends personalized quiz results email, notifies Michael |
-| 02 | `02-contact-form-notification.json` | POST webhook from contact form | Emails Michael, auto-replies to sender, adds contact to Brevo |
-| 03 | `03-consultation-booked-notification.json` | POST webhook from Calendly | Updates lead status, creates consultation record in Supabase, emails Michael, notifies Mom |
-| 04 | `04-sale-logged-revenue-tracking.json` | POST webhook from sale log form | Inserts sale into Supabase, updates lead to "customer", emails Michael with revenue breakdown (including 25% cut) |
+## Workflows (all combined in one n8n workflow)
+
+| # | Entry point | What It Does |
+|---|-------------|--------------|
+| 01 | `POST /webhook/shelley-quiz-submit` | Upserts lead in Supabase, sends Resend results email to visitor, Resend notification to Michael |
+| 02 | `POST /webhook/shelley-contact-form` | Resend email to Michael, Resend auto-reply to sender, upserts contact in `leads` table |
+| 03 | `POST /webhook/shelley-calendly` *(see §5 below — needs to be wired up)* | Looks up lead by email, marks as `consultation_booked`, creates `consultations` row, emails Michael + Mom |
+| 04 | `POST /webhook/shelley-sale-logged` | Inserts `sales` row with retail/wholesale/net/25% cut, updates lead to `customer`, emails Michael with breakdown |
 
 ## Prerequisites
 
 ### 1. Supabase Tables
 
-These workflows expect the following tables in your Supabase project (`nhpasiedrcbgtrffhagr`). Create them using the schema from the Tech Stack Notion page or run these SQL statements:
-
-```sql
--- Leads table
-CREATE TABLE public.leads (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  first_name text,
-  last_name text,
-  email text UNIQUE,
-  phone text,
-  source text DEFAULT 'quiz',
-  quiz_answers jsonb,
-  skin_type text,
-  top_concerns text[],
-  status text DEFAULT 'new',
-  notes text,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-
--- Consultations table
-CREATE TABLE public.consultations (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  lead_id uuid REFERENCES public.leads(id),
-  scheduled_date timestamptz,
-  completed boolean DEFAULT false,
-  outcome text,
-  notes text,
-  created_at timestamptz DEFAULT now()
-);
-
--- Sales table
-CREATE TABLE public.sales (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  lead_id uuid REFERENCES public.leads(id),
-  consultation_id uuid REFERENCES public.consultations(id),
-  date date,
-  amount_retail numeric,
-  amount_wholesale numeric,
-  net_profit numeric GENERATED ALWAYS AS (amount_retail - amount_wholesale) STORED,
-  products text,
-  source text DEFAULT 'funnel',
-  is_repeat boolean DEFAULT false,
-  notes text,
-  created_at timestamptz DEFAULT now()
-);
-
--- Enable RLS on all tables
-ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.consultations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
-
--- Service role has full access (n8n uses service role key)
-CREATE POLICY "Service role full access" ON public.leads FOR ALL USING (true);
-CREATE POLICY "Service role full access" ON public.consultations FOR ALL USING (true);
-CREATE POLICY "Service role full access" ON public.sales FOR ALL USING (true);
-```
+Run [`schema.sql`](./schema.sql) in Supabase → SQL Editor. It creates `leads`, `consultations`, `sales` with UTM columns and RLS enabled for the service role.
 
 ### 2. n8n Credentials to Configure
-
-After importing each workflow, you'll need to set up credentials. The JSON files reference placeholder credential names — replace these with your actual credentials.
 
 #### Supabase Credential
 - **Name:** `Supabase - Kidder Systems`
 - **Host:** `https://nhpasiedrcbgtrffhagr.supabase.co`
-- **Service Role Key:** (from Supabase → Project Settings → API → service_role secret)
+- **Service Role Key:** Supabase → Project Settings → API → `service_role` secret
 
-#### Brevo Credential
-- **Name:** `Brevo - Kidder Systems`
-- **API Key:** (from Brevo → SMTP & API → API Keys → Generate)
+#### Resend Credential (Header Auth)
+- **Name:** `Resend — Kidder Systems`
+- **Type:** Header Auth
+- **Name field:** `Authorization`
+- **Value:** `Bearer re_YOUR_KEY` (from https://resend.com → API Keys)
 
-### 3. Brevo Email Lists
+All 8 HTTP Request nodes pointing at `api.resend.com/emails` should use this credential under **Authentication → Generic → Header Auth**. Remove any literal `Authorization` header rows.
 
-Create these lists in Brevo before activating workflows:
+### 3. Resend Domain Verification
 
-| List ID | Name | Purpose |
-|---------|------|---------|
-| 2 | Quiz Leads | People who completed the skincare quiz |
-| 3 | Contact Form | People who submitted the contact form |
+In Resend → **Domains → Add Domain**, verify:
+- `shelleykidder.com` — sender for `hello@shelleykidder.com`
+- `kiddersystems.com` — sender for `notifications@kiddersystems.com`
 
-### 4. Brevo Sender Verification
+Add the DKIM/SPF DNS records Resend shows to each registrar. Wait for **Verified** status before testing.
 
-Verify these sender emails in Brevo (Settings → Senders & IPs → Add a sender):
-- `hello@shelleykidder.com` (or whatever domain you pick for Shelley)
-- `notifications@kiddersystems.com`
+### 4. Placeholder Strings to Replace
 
-### 5. Calendly Webhook (Workflow 03)
+In the deployed workflow, search the JSON bodies for these literal strings and replace:
 
-In Calendly:
-1. Go to Integrations → Webhooks (requires Calendly Pro plan, or use Zapier free tier as bridge)
-2. Add webhook URL: `https://YOUR_N8N_INSTANCE/webhook/shelley-calendly-webhook`
-3. Subscribe to event: `invitee.created`
+| Placeholder | Replace with | Where |
+|-------------|--------------|-------|
+| `<__PLACEHOLDER_VALUE__Resend API Key__>` | Remove — credential handles it | All Resend nodes |
+| `<__PLACEHOLDER_VALUE__Calendly booking URL__>` | Shelley's Calendly link | `Send Results Email via Resend`, `Auto-Reply — Contact` |
+| `<__PLACEHOLDER_VALUE__Mom's Email__>` | Shelley's real email | `Email Mom — Booking` |
 
-If Calendly Pro isn't available, alternative: use n8n's built-in Calendly trigger node instead of the webhook node (swap the first node).
+### 5. Calendly Webhook (currently unwired)
 
-### 6. Notification Webhooks
+The `Format Booking Data` → `Lookup Lead — Calendly` → … → `Email Mom — Booking` branch exists but has **no trigger**. To activate:
 
-The notification nodes use HTTP Request to send alerts. Options:
+**Option A — Calendly Pro webhook:**
+1. In n8n: add a **Webhook** node (path `shelley-calendly`, method POST) and connect it to `Format Booking Data`.
+2. In Calendly → Integrations → Webhooks → Create Subscription:
+   - URL: `https://mkidder97.app.n8n.cloud/webhook/shelley-calendly`
+   - Events: `invitee.created`, `invitee.canceled`
 
-**Option A: Slack Incoming Webhook**
-1. Create a Slack app → Enable Incoming Webhooks
-2. Add webhook to a channel (e.g., `#shelley-leads`)
-3. Set the webhook URL in n8n as environment variable `NOTIFICATION_WEBHOOK_URL`
+**Option B — no Calendly Pro:** Use n8n's built-in **Calendly Trigger** node (OAuth auth) in place of the new Webhook node.
 
-**Option B: Email Only**
-If you don't use Slack, just delete the "Notify Michael (Slack/Webhook)" and "Notify Mom (Slack/SMS Webhook)" nodes. The Brevo email notifications will still fire.
+### 6. Known Fixes Needed in the Live Workflow
 
-**Option C: SMS via Twilio**
-Replace the HTTP Request notification nodes with Twilio nodes to send SMS to Mom.
+Before activating production webhooks:
 
-## How to Import
+- **`Upsert Contact Lead`** node has empty params. Set `Table: leads`, operation `upsert`, conflict column `email`, and map `first_name/last_name/email/source='contact'/status='new'/notes=message`.
+- **UTM expressions in `Insert Lead → Supabase`** currently reference `$('Format Lead Data').item.json.body.utm_*`, which won't resolve (the Set node doesn't carry `body`). Change each to `$('Quiz Submission Webhook').item.json.body.utm_*`.
 
-1. Open your n8n instance
-2. Click **+ Add Workflow** (or from the workflow list)
-3. Click the **three dots menu (⋯)** in the top right → **Import from File**
-4. Select the JSON file
-5. Configure credentials (click each node with a ⚠️ warning)
-6. Test with the **Test URL** first (not the Production URL)
-7. Once tested, toggle the workflow to **Active** to enable the Production URL
+## Webhook URLs (already live)
 
-## Webhook URLs
+| Env Variable | Production URL |
+|--------------|----------------|
+| `N8N_QUIZ_WEBHOOK_URL` | `https://mkidder97.app.n8n.cloud/webhook/shelley-quiz-submit` |
+| `N8N_CONTACT_WEBHOOK_URL` | `https://mkidder97.app.n8n.cloud/webhook/shelley-contact-form` |
+| *(sale-logging form — CRM portal only)* | `https://mkidder97.app.n8n.cloud/webhook/shelley-sale-logged` |
+| *(Calendly — see §5 to enable)* | `https://mkidder97.app.n8n.cloud/webhook/shelley-calendly` |
 
-After importing, n8n will generate webhook URLs. Use these in your environment variables:
-
-| Env Variable | Workflow | Where to Put It |
-|-------------|----------|-----------------|
-| `N8N_QUIZ_WEBHOOK_URL` | 01 | ShelleyKidderWebsite `.env.local` |
-| `N8N_CONTACT_WEBHOOK_URL` | 02 | ShelleyKidderWebsite `.env.local` |
-
-Workflows 03 and 04 are triggered by Calendly and the sale-logging form (which will be built into the CRM portal), so they don't need env vars in the website.
+Set the first two in the website's Vercel project env + `.env.local`.
 
 ## Testing Checklist
 
 ### Workflow 01 — Quiz Pipeline
 ```bash
-curl -X POST https://YOUR_N8N/webhook-test/shelley-quiz-submit \
+curl -X POST https://mkidder97.app.n8n.cloud/webhook-test/shelley-quiz-submit \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Jane Doe",
@@ -162,11 +98,11 @@ curl -X POST https://YOUR_N8N/webhook-test/shelley-quiz-submit \
     "time_commitment": "5-10 minutes"
   }'
 ```
-**Verify:** Lead appears in Supabase `leads` table, contact created in Brevo list 2, quiz results email sent, Michael notified.
+**Verify:** Lead appears in Supabase `leads` table, quiz results email arrives at the submitter's inbox via Resend, Michael gets a notification email.
 
 ### Workflow 02 — Contact Form
 ```bash
-curl -X POST https://YOUR_N8N/webhook-test/shelley-contact-form \
+curl -X POST https://mkidder97.app.n8n.cloud/webhook-test/shelley-contact-form \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Sarah Smith",
@@ -174,14 +110,14 @@ curl -X POST https://YOUR_N8N/webhook-test/shelley-contact-form \
     "message": "Hi Shelley! I am interested in booking a group beauty event for my bridal party."
   }'
 ```
-**Verify:** Michael gets email, sender gets auto-reply, contact added to Brevo list 3.
+**Verify:** Michael gets email, sender gets auto-reply via Resend, contact row upserted into `leads` with `source='contact'`.
 
 ### Workflow 03 — Consultation Booked
-Test by creating a real Calendly test booking, or manually POST the Calendly payload format to the webhook test URL.
+Once the Calendly webhook is wired per §5, create a real Calendly test booking. Verify: `leads.status` flips to `consultation_booked`, a `consultations` row is created, and Michael + Mom both get emails.
 
 ### Workflow 04 — Sale Logged
 ```bash
-curl -X POST https://YOUR_N8N/webhook-test/shelley-sale-logged \
+curl -X POST https://mkidder97.app.n8n.cloud/webhook-test/shelley-sale-logged \
   -H "Content-Type: application/json" \
   -d '{
     "customer_name": "Jane Doe",
@@ -197,18 +133,17 @@ curl -X POST https://YOUR_N8N/webhook-test/shelley-sale-logged \
 ```
 **Verify:** Sale in Supabase `sales` table, lead status updated to "customer", Michael gets email with revenue breakdown showing $18.75 as 25% cut.
 
-## Architecture Diagram
+## Architecture
 
 ```
-[Shelley's Website]                    [Calendly]              [CRM Portal]
-     |                                      |                       |
-     |--- Quiz Submit ---> [WF 01] -------> Supabase (leads)       |
-     |--- Contact Form --> [WF 02] -------> Brevo (contacts)       |
-     |                          |                                    |
-     |                     [Calendly Webhook] --> [WF 03] --------> Supabase (consultations)
-     |                                                               |
-     |                                              Sale Form ----> [WF 04] --> Supabase (sales)
-     |                                                               |
-     |                                                          Email Notifications
-     |                                                          (Michael + Mom)
+[Shelley's Website]                      [Calendly]            [CRM Portal]
+     |                                        |                      |
+     |-- Quiz Submit --> [WF 01] ---> Supabase (leads) ---> Resend (results + notify)
+     |-- Contact -----> [WF 02] ---> Supabase (leads) ---> Resend (Michael + auto-reply)
+     |
+     |                           [Calendly Webhook] --> [WF 03] --> Supabase (consultations) --> Resend (Michael + Mom)
+     |
+     |                                              Sale Form -> [WF 04] --> Supabase (sales) --> Resend (Michael w/ 25% cut)
 ```
+
+All error outputs funnel through a single `Error Catcher → Email Error Alert` branch that pings `michael@kidder.systems`.

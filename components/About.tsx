@@ -1,14 +1,19 @@
+import Image from "next/image";
+
 export function About() {
   return (
     <section id="about" className="bg-cream-100/60">
       <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 sm:py-28 md:grid-cols-2 md:items-center">
         <div className="order-2 md:order-1">
-          <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] bg-gradient-to-br from-gold-400/30 via-blush-100 to-blush-200 shadow-lg ring-1 ring-black/5">
-            <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-              <p className="font-serif text-sm italic text-warm-gray">
-                REPLACE: Portrait or lifestyle photo of Shelley
-              </p>
-            </div>
+          <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] shadow-lg ring-1 ring-black/5">
+            <Image
+              src="/images/shelley-lifestyle.jpg"
+              alt="Shelley with friends at a beachfront table in Florida"
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="object-cover"
+              priority
+            />
           </div>
         </div>
 
